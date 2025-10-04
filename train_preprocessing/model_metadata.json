@@ -1,0 +1,18 @@
+{
+  "feature_columns": [
+    "session_time_ms",
+    "seat_hesitation_time_ms",
+    "ktp_avg_keystroke_interval_ms",
+    "ktp_keystroke_variance",
+    "ktp_total_entry_time_ms",
+    "ktp_paste_detected",
+    "field_edit_count",
+    "mouse_total_distance",
+    "mouse_smoothness",
+    "total_clicks"
+  ],
+  "contamination": 0.1,
+  "random_state": 42,
+  "model_type": "IsolationForest",
+  "n_estimators": 100
+}

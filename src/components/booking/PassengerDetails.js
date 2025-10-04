@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export default function PassengerDetails({ initialData, onNext }) {
+export default function PassengerDetails({ initialData, onNext, tracker }) {
   const [passengers, setPassengers] = useState(
     initialData.length > 0
       ? initialData
@@ -23,6 +23,11 @@ export default function PassengerDetails({ initialData, onNext }) {
   };
 
   const updatePassenger = (id, field, value) => {
+    // Track field edits for corrections
+    if (tracker) {
+      tracker.trackFieldEdit(`${field}_${id}`);
+    }
+
     // For KTP number, only allow digits and limit to 16 characters
     if (field === 'ktpNumber') {
       value = value.replace(/\D/g, '').slice(0, 16);
@@ -91,6 +96,24 @@ export default function PassengerDetails({ initialData, onNext }) {
                   onChange={(e) =>
                     updatePassenger(passenger.id, 'ktpNumber', e.target.value)
                   }
+                  onKeyDown={(e) => {
+                    if (tracker) {
+                      tracker.trackKTPKeystroke(
+                        `ktp_${passenger.id}`,
+                        'keydown',
+                        passenger.ktpNumber
+                      );
+                    }
+                  }}
+                  onPaste={(e) => {
+                    if (tracker) {
+                      tracker.trackKTPKeystroke(
+                        `ktp_${passenger.id}`,
+                        'paste',
+                        passenger.ktpNumber
+                      );
+                    }
+                  }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27500] focus:border-transparent"
                   placeholder="16 digit KTP number"
                   required

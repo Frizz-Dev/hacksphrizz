@@ -1,0 +1,1 @@
+# serverless python function to help model utilization in vercel

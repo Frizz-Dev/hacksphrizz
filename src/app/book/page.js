@@ -15,6 +15,7 @@ import ExtraProtection from '@/components/booking/ExtraProtection';
 import MealAndCab from '@/components/booking/MealAndCab';
 import Checkout from '@/components/booking/Checkout';
 import ReCAPTCHA from 'react-google-recaptcha';
+import BehaviorTracker from '@/utils/behaviorTracking';
 
 const TOTAL_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
 
@@ -31,6 +32,7 @@ function BookingPageContent() {
   const [showCaptcha, setShowCaptcha] = useState(false);
   const [recaptchaRef, setRecaptchaRef] = useState(null);
   const [pendingPaymentData, setPendingPaymentData] = useState(null);
+  const [tracker] = useState(() => new BehaviorTracker());
   const [bookingData, setBookingData] = useState({
     passengers: [],
     selectedSeats: [],
@@ -47,6 +49,30 @@ function BookingPageContent() {
 
   const trainId = searchParams.get('train');
   const selectedDate = searchParams.get('date');
+
+  // Track mouse movement globally
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (tracker && currentStep <= 4) {
+        tracker.trackMouseMovement(e.clientX, e.clientY);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [tracker, currentStep]);
+
+  // Track all clicks globally
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (tracker && currentStep <= 4) {
+        tracker.trackClick();
+      }
+    };
+
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, [tracker, currentStep]);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -254,16 +280,38 @@ function BookingPageContent() {
       return;
     }
 
-    // 1️⃣ Jalankan AI behavioral → hardcode dulu
-    const aiScore = 0.4; // nanti diganti AI
-    if (aiScore < 0.5) {
-      setPendingPaymentData(paymentData); // Simpan paymentData untuk digunakan setelah captcha
-      setShowCaptcha(true);
-      return;
-    }
+    // Collect behavioral data
+    const behaviorData = tracker.exportForML();
+    console.log('Behavioral Data for Trust Score:', behaviorData);
 
-    // Jika trust score tinggi, langsung lanjutkan booking
-    await completeBooking(paymentData);
+    // Send behavioral data to ML API for trust score calculation
+    try {
+      const trustScoreResponse = await fetch('/api/calculate-trust', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          behavior_data: behaviorData
+        }),
+      });
+
+      const { trust_score } = await trustScoreResponse.json();
+      console.log('Trust Score from ML:', trust_score);
+
+      // If trust score is low, show captcha
+      if (trust_score < 0.5) {
+        setPendingPaymentData(paymentData);
+        setShowCaptcha(true);
+        return;
+      }
+
+      // If trust score is high, proceed with booking
+      await completeBooking(paymentData);
+    } catch (error) {
+      console.error('Error calculating trust score:', error);
+      // Fallback: proceed with booking if ML API fails
+      await completeBooking(paymentData);
+    }
   };
 
   if (authLoading || trainLoading) {
@@ -347,6 +395,7 @@ function BookingPageContent() {
               <PassengerDetails
                 initialData={bookingData.passengers}
                 onNext={handleNext}
+                tracker={tracker}
               />
             )}
             {currentStep === 2 && (
@@ -357,6 +406,7 @@ function BookingPageContent() {
                 onBack={handleBack}
                 trainId={train.id}
                 availableSeats={train.available_seats}
+                tracker={tracker}
               />
             )}
             {currentStep === 3 && (
@@ -364,6 +414,7 @@ function BookingPageContent() {
                 initialData={bookingData.protections}
                 onNext={handleNext}
                 onBack={handleBack}
+                tracker={tracker}
               />
             )}
             {currentStep === 4 && (
@@ -371,6 +422,7 @@ function BookingPageContent() {
                 initialData={bookingData.extras}
                 onNext={handleNext}
                 onBack={handleBack}
+                tracker={tracker}
               />
             )}
             {currentStep === 5 && (

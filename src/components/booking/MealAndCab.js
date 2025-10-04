@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
-export default function MealAndCab({ initialData, onNext, onBack }) {
+export default function MealAndCab({ initialData, onNext, onBack, tracker }) {
+  const { user } = useAuth();
   const [extras, setExtras] = useState(initialData || {
     trainMeal: false,
     stationCab: false,
@@ -12,8 +14,30 @@ export default function MealAndCab({ initialData, onNext, onBack }) {
     setExtras({ ...extras, [field]: !extras[field] });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Send behavioral data to database for training
+    if (tracker && user) {
+      const behaviorData = tracker.exportForML();
+
+      try {
+        const response = await fetch('/api/save-training-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.id,
+            ...behaviorData
+          }),
+        });
+        const result = await response.json();
+        console.log('Training data saved:', behaviorData);
+        console.log('API response:', result);
+      } catch (error) {
+        console.error('Error saving training data:', error);
+      }
+    }
+
     onNext({ extras });
   };
 

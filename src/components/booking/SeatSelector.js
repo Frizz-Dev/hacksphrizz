@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export default function SeatSelector({ passengers, initialData, onNext, onBack }) {
+export default function SeatSelector({ passengers, initialData, onNext, onBack, tracker }) {
   const [selectedSeats, setSelectedSeats] = useState(initialData || []);
 
   // Generate dummy seats (4 rows, 4 seats per row - A, B, C, D)
@@ -10,6 +10,11 @@ export default function SeatSelector({ passengers, initialData, onNext, onBack }
   const columns = ['A', 'B', 'C', 'D'];
 
   const toggleSeat = (seatNumber) => {
+    // End hesitation when seat is clicked
+    if (tracker) {
+      tracker.endSeatHover();
+    }
+
     if (selectedSeats.includes(seatNumber)) {
       setSelectedSeats(selectedSeats.filter((s) => s !== seatNumber));
     } else {
@@ -80,6 +85,16 @@ export default function SeatSelector({ passengers, initialData, onNext, onBack }
                       key={seatNumber}
                       type="button"
                       onClick={() => !occupied && toggleSeat(seatNumber)}
+                      onMouseEnter={() => {
+                        if (tracker && !occupied) {
+                          tracker.startSeatHover();
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        if (tracker && !occupied) {
+                          tracker.endSeatHover();
+                        }
+                      }}
                       disabled={occupied}
                       className={`
                         w-10 h-10 rounded text-xs font-semibold transition-colors
@@ -109,6 +124,16 @@ export default function SeatSelector({ passengers, initialData, onNext, onBack }
                       key={seatNumber}
                       type="button"
                       onClick={() => !occupied && toggleSeat(seatNumber)}
+                      onMouseEnter={() => {
+                        if (tracker && !occupied) {
+                          tracker.startSeatHover();
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        if (tracker && !occupied) {
+                          tracker.endSeatHover();
+                        }
+                      }}
                       disabled={occupied}
                       className={`
                         w-10 h-10 rounded text-xs font-semibold transition-colors

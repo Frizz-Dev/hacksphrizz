@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export default function ExtraProtection({ initialData, onNext, onBack }) {
+export default function ExtraProtection({ initialData, onNext, onBack, tracker }) {
   const [protections, setProtections] = useState(initialData || {
     personalAccident: false,
     travelProtection: false,
