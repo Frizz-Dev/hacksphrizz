@@ -57,13 +57,26 @@ export default function Home() {
     setCurrentStep((prev) => (prev - 1 + steps.length) % steps.length);
   };
 
-  if (loading || user) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F27500] mx-auto mb-4"></div>
           <div className="text-[#F27500] text-xl font-semibold">Loading...</div>
           <div className="text-gray-500 text-sm mt-2">Please wait while we prepare your experience</div>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is logged in, show loading while redirecting
+  if (user) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F27500] mx-auto mb-4"></div>
+          <div className="text-[#F27500] text-xl font-semibold">Redirecting to Dashboard...</div>
+          <div className="text-gray-500 text-sm mt-2">Taking you to your personalized dashboard</div>
         </div>
       </div>
     );

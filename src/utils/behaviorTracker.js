@@ -25,11 +25,6 @@ export class BehaviorTracker {
         suspiciousPatterns: [],
         interactionCount: 0,
         focusChanges: 0,
-        // Trust score tracking
-        lastTrustScore: null,
-        lastTrustLevel: null,
-        lastNeedsCaptcha: null,
-        lastAnalysisTime: null,
       },
       // Advanced metrics for bot detection
       timingMetrics: {
@@ -954,7 +949,7 @@ export class BehaviorTracker {
     return diversity / 6; // Normalize to 0-1
   }
 
-  // Send data to server for AI analysis and return trust score
+  // Send data to server for AI analysis
   async sendToServer(isBeforeUnload = false) {
     console.log('🔥🔥🔥 [BEHAVIOR TRACKER] sendToServer called with isBeforeUnload:', isBeforeUnload);
     console.log('🔥 [BEHAVIOR TRACKER] User ID:', this.userId);
@@ -973,10 +968,7 @@ export class BehaviorTracker {
         return {
           success: false,
           error: 'Insufficient interaction data',
-          message: 'Please interact with the page first (move mouse, type, etc.)',
-          trustScore: null,
-          trustLevel: null,
-          needsCaptcha: true
+          message: 'Please interact with the page first (move mouse, type, etc.)'
         };
       }
 
@@ -1046,16 +1038,12 @@ export class BehaviorTracker {
           console.error(`Optimized payload still too large (${finalSize} bytes). Using minimal payload.`);
           const minimalPayload = this.createMinimalPayload();
           const minimalBlob = new Blob([JSON.stringify(minimalPayload)], { type: 'application/json' });
-          const sent = navigator.sendBeacon('/api/behavior/track', blob);
+          const sent = navigator.sendBeacon('/api/behavior/track', minimalBlob);
           // sendBeacon returns boolean, not response object
           return {
             success: sent,
             method: 'beacon',
-            message: sent ? 'Data sent via beacon' : 'Beacon send failed',
-            trustScore: null,
-            trustLevel: null,
-            needsCaptcha: true,
-            note: 'Trust score not available with beacon API'
+            message: sent ? 'Data sent via beacon' : 'Beacon send failed'
           };
         }
 
@@ -1064,11 +1052,7 @@ export class BehaviorTracker {
         return {
           success: sent,
           method: 'beacon',
-          message: sent ? 'Data sent via beacon' : 'Beacon send failed',
-          trustScore: null,
-          trustLevel: null,
-          needsCaptcha: true,
-          note: 'Trust score not available with beacon API'
+          message: sent ? 'Data sent via beacon' : 'Beacon send failed'
         };
       } else {
         console.log('🔥 [BEHAVIOR TRACKER] Making fetch request to /api/behavior/track');
@@ -1098,44 +1082,14 @@ export class BehaviorTracker {
 
         const result = await response.json();
         console.log('✅ Behavior data sent successfully:', result);
-        
-        // Store trust score in tracking data for future reference
-        if (result.trustScore !== undefined) {
-          this.trackingData.sessionMetrics.lastTrustScore = result.trustScore;
-          this.trackingData.sessionMetrics.lastTrustLevel = result.trustLevel;
-          this.trackingData.sessionMetrics.lastNeedsCaptcha = result.needsCaptcha;
-          this.trackingData.sessionMetrics.lastAnalysisTime = Date.now();
-          
-          console.log('💾 Trust score stored in tracking data:', {
-            trustScore: result.trustScore,
-            trustLevel: result.trustLevel,
-            needsCaptcha: result.needsCaptcha
-          });
-        }
-        
-        // Return the complete result including trust score
-        return {
-          success: true,
-          method: 'fetch',
-          trustScore: result.trustScore || null,
-          trustLevel: result.trustLevel || null,
-          needsCaptcha: result.needsCaptcha !== undefined ? result.needsCaptcha : true,
-          analysisMethod: result.analysisMethod || 'unknown',
-          reasons: result.reasons || [],
-          metadata: result.metadata || {},
-          rawResult: result
-        };
+        return result;
       }
     } catch (error) {
       console.error('❌ Error sending behavior data:', error);
       return {
         success: false,
         error: error.message || 'Unknown error',
-        details: error.stack,
-        trustScore: null,
-        trustLevel: 'error',
-        needsCaptcha: true,
-        method: 'error'
+        details: error.stack
       };
     }
   }
@@ -1159,32 +1113,6 @@ export class BehaviorTracker {
       clearInterval(this.periodicTrackingInterval);
       this.periodicTrackingInterval = null;
     }
-  }
-
-  // Get the last calculated trust score
-  getLastTrustScore() {
-    return {
-      trustScore: this.trackingData.sessionMetrics.lastTrustScore || null,
-      trustLevel: this.trackingData.sessionMetrics.lastTrustLevel || null,
-      needsCaptcha: this.trackingData.sessionMetrics.lastNeedsCaptcha !== undefined ? 
-        this.trackingData.sessionMetrics.lastNeedsCaptcha : true,
-      analysisTime: this.trackingData.sessionMetrics.lastAnalysisTime || null,
-      hasScore: this.trackingData.sessionMetrics.lastTrustScore !== undefined
-    };
-  }
-
-  // Get trust score with fresh analysis (calls sendToServer)
-  async getTrustScore() {
-    const result = await this.sendToServer();
-    return {
-      success: result.success,
-      trustScore: result.trustScore,
-      trustLevel: result.trustLevel,
-      needsCaptcha: result.needsCaptcha,
-      analysisMethod: result.analysisMethod,
-      reasons: result.reasons,
-      error: result.error
-    };
   }
 
   // Legacy compatibility methods
@@ -1296,11 +1224,6 @@ export class BehaviorTracker {
         suspiciousPatterns: [],
         interactionCount: 0,
         focusChanges: 0,
-        // Trust score tracking
-        lastTrustScore: null,
-        lastTrustLevel: null,
-        lastNeedsCaptcha: null,
-        lastAnalysisTime: null,
       },
       timingMetrics: {
         keystrokeIntervals: [],
@@ -1382,27 +1305,5 @@ export const behaviorTracker = {
   
   getInstance() {
     return this.instance;
-  },
-
-  // Convenience methods for trust score access
-  async getTrustScore() {
-    if (!this.instance) {
-      throw new Error('BehaviorTracker not initialized. Call init(userId) first.');
-    }
-    return await this.instance.getTrustScore();
-  },
-
-  getLastTrustScore() {
-    if (!this.instance) {
-      throw new Error('BehaviorTracker not initialized. Call init(userId) first.');
-    }
-    return this.instance.getLastTrustScore();
-  },
-
-  async sendToServer(isBeforeUnload = false) {
-    if (!this.instance) {
-      throw new Error('BehaviorTracker not initialized. Call init(userId) first.');
-    }
-    return await this.instance.sendToServer(isBeforeUnload);
   }
 };

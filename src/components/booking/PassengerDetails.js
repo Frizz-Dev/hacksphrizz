@@ -2,21 +2,12 @@
 
 import { useState } from 'react';
 
-export default function PassengerDetails({ initialData, selectedSeats, onNext, onBack }) {
+export default function PassengerDetails({ initialData, onNext }) {
   const [passengers, setPassengers] = useState(
-    initialData || selectedSeats?.map((seat, index) => ({ 
-      id: Date.now() + index, 
-      ktpNumber: '', 
-      fullName: '', 
-      type: 'Adult' 
-    })) || [{ 
-      id: Date.now(), 
-      ktpNumber: '', 
-      fullName: '', 
-      type: 'Adult' 
-    }]
+    initialData.length > 0
+      ? initialData
+      : [{ id: Date.now(), ktpNumber: '', fullName: '', type: 'Adult' }]
   );
-  // const [detectionMethod, setDetectionMethod] = useState('rule-based'); // Bot detection toggle - commented out
 
   const addPassenger = () => {
     setPassengers([
@@ -41,69 +32,6 @@ export default function PassengerDetails({ initialData, selectedSeats, onNext, o
     );
   };
 
-  const testDetectionMethod = async () => {
-    try {
-      console.log(`🧪 Testing ${detectionMethod} detection method...`);
-      
-      if (detectionMethod === 'rule-based') {
-        const response = await fetch('/api/behavior/track', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: `passenger_${Date.now()}`,
-            behaviors: {
-              clicks: Math.floor(Math.random() * 10) + 5,
-              keystrokes: Math.floor(Math.random() * 50) + 20,
-              mouse_movements: Math.floor(Math.random() * 100) + 50,
-              scroll_events: Math.floor(Math.random() * 20) + 10,
-              time_on_page: Math.floor(Math.random() * 60000) + 30000,
-              tab_switches: Math.floor(Math.random() * 5),
-              copy_paste_events: Math.floor(Math.random() * 3),
-              right_click_events: Math.floor(Math.random() * 2),
-              form_completion_time: Math.floor(Math.random() * 120000) + 60000,
-              typing_patterns: {
-                avg_interval: Math.floor(Math.random() * 200) + 100,
-                variance: Math.floor(Math.random() * 50) + 25
-              }
-            }
-          })
-        });
-        const result = await response.json();
-        console.log('Rule-based result:', result);
-        alert(`Rule-based Detection Result: ${result.is_bot ? 'Bot Detected' : 'Human Detected'} (Score: ${result.trust_score}%)`);
-      } else {
-        const response = await fetch('http://localhost:5001/predict-ai', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: `passenger_${Date.now()}`,
-            behaviors: {
-              clicks: Math.floor(Math.random() * 10) + 5,
-              keystrokes: Math.floor(Math.random() * 50) + 20,
-              mouse_movements: Math.floor(Math.random() * 100) + 50,
-              scroll_events: Math.floor(Math.random() * 20) + 10,
-              time_on_page: Math.floor(Math.random() * 60000) + 30000,
-              tab_switches: Math.floor(Math.random() * 5),
-              copy_paste_events: Math.floor(Math.random() * 3),
-              right_click_events: Math.floor(Math.random() * 2),
-              form_completion_time: Math.floor(Math.random() * 120000) + 60000,
-              typing_patterns: {
-                avg_interval: Math.floor(Math.random() * 200) + 100,
-                variance: Math.floor(Math.random() * 50) + 25
-              }
-            }
-          })
-        });
-        const result = await response.json();
-        console.log('AI detection result:', result);
-        alert(`AI Detection Result: ${result.prediction === 1 ? 'Bot Detected' : 'Human Detected'} (Confidence: ${(result.confidence * 100).toFixed(1)}%)`);
-      }
-    } catch (error) {
-      console.error(`Error testing ${detectionMethod} detection:`, error);
-      alert(`Error testing ${detectionMethod} detection. Check console for details.`);
-    }
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -124,7 +52,7 @@ export default function PassengerDetails({ initialData, selectedSeats, onNext, o
       return;
     }
 
-    onNext({ passengers }); // Only pass passengers, removed detectionMethod
+    onNext({ passengers });
   };
 
   return (
@@ -214,66 +142,6 @@ export default function PassengerDetails({ initialData, selectedSeats, onNext, o
         >
           + Add Another Passenger
         </button>
-
-        {/* Bot Detection Method Selection - COMMENTED OUT FOR NOW */}
-        {/* 
-        <div className="bg-blue-50 rounded-lg p-6 mb-6 border border-blue-200">
-          <h3 className="text-lg font-semibold mb-4 text-blue-900">Security Detection Method</h3>
-          <p className="text-sm text-blue-700 mb-4">
-            Choose the bot detection method for enhanced security during booking:
-          </p>
-          
-          <div className="space-y-3">
-            <label className="flex items-center p-3 border-2 border-blue-200 rounded-lg cursor-pointer hover:border-blue-400 transition-colors bg-white">
-              <input
-                type="radio"
-                name="detection-method"
-                value="rule-based"
-                checked={detectionMethod === 'rule-based'}
-                onChange={(e) => setDetectionMethod(e.target.value)}
-                className="w-4 h-4 text-blue-600"
-              />
-              <div className="ml-3">
-                <span className="font-medium text-blue-900">Rule-Based Detection</span>
-                <p className="text-xs text-blue-600">Traditional security rules and patterns</p>
-              </div>
-            </label>
-
-            <label className="flex items-center p-3 border-2 border-blue-200 rounded-lg cursor-pointer hover:border-blue-400 transition-colors bg-white">
-              <input
-                type="radio"
-                name="detection-method"
-                value="ai"
-                checked={detectionMethod === 'ai'}
-                onChange={(e) => setDetectionMethod(e.target.value)}
-                className="w-4 h-4 text-blue-600"
-              />
-              <div className="ml-3">
-                <span className="font-medium text-blue-900">AI-Powered Detection</span>
-                <p className="text-xs text-blue-600">Advanced machine learning behavior analysis</p>
-              </div>
-            </label>
-          </div>
-
-          <div className="mt-4 p-3 bg-blue-100 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                <span className="text-sm text-blue-800 font-medium">
-                  Currently using: {detectionMethod === 'rule-based' ? 'Rule-Based' : 'AI-Powered'} Detection
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={testDetectionMethod}
-                className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
-              >
-                Test Method
-              </button>
-            </div>
-          </div>
-        </div>
-        */}
 
         <div className="flex justify-end">
           <button

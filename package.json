@@ -6,12 +6,18 @@
     "dev": "next dev --turbopack -p 3003",
     "build": "next build --turbopack",
     "start": "next start -p 3003",
-    "lint": "eslint"
+    "lint": "eslint",
+    "ai:generate": "node ai_training_system.js generate",
+    "ai:train": "node ai_training_system.js train",
+    "ai:test": "node test_ai_bot_detection.js",
+    "ai:stats": "node ai_training_system.js stats",
+    "ai:clear": "node ai_training_system.js clear"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@huggingface/inference": "^4.10.0",
     "@supabase/supabase-js": "^2.58.0",
+    "@tensorflow/tfjs": "^4.22.0",
     "crowdhandler-sdk": "^2.2.0",
     "next": "15.5.4",
     "node-fetch": "^2.6.7",

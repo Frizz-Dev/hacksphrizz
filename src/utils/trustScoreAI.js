@@ -202,50 +202,46 @@ function analyzeMouseBehaviorBalanced(mouseMovements) {
       reasons.push('Human-like mouse timing');
     }
 
-    // BALANCED: More tolerance for consistency but stricter than before
+    // BALANCED: More tolerance for consistency
     if (intervalVariance < 5) { // Extremely low variance = bot
       botScore += 0.6;
       reasons.push('Too consistent mouse timing');
-    } else if (intervalVariance < 15) { // Low variance = suspicious
-      botScore += 0.3;
-      reasons.push('Somewhat consistent mouse timing');
     } else if (intervalVariance > 20) { // More tolerance for variance
       humanScore += 0.1;
       reasons.push('Natural mouse variance');
     }
   }
 
-    // Check for linear movement patterns - more strict for bots
-    if (mouseMovements.length > 8) {
-      let linearCount = 0;
-      for (let i = 2; i < mouseMovements.length; i++) {
-        const prev = mouseMovements[i-1];
-        const curr = mouseMovements[i];
-        const prevPrev = mouseMovements[i-2];
-        
-        // Check if movement is extremely linear
-        const dx1 = prev.x - prevPrev.x;
-        const dy1 = prev.y - prevPrev.y;
-        const dx2 = curr.x - prev.x;
-        const dy2 = curr.y - prev.y;
-        
-        if (Math.abs(dx1 - dx2) < 1 && Math.abs(dy1 - dy2) < 1) {
-          linearCount++;
-        }
-      }
+  // Check for linear movement patterns - more tolerant
+  if (mouseMovements.length > 8) {
+    let linearCount = 0;
+    for (let i = 2; i < mouseMovements.length; i++) {
+      const prev = mouseMovements[i-1];
+      const curr = mouseMovements[i];
+      const prevPrev = mouseMovements[i-2];
       
-      const linearRatio = linearCount / (mouseMovements.length - 2);
-      if (linearRatio > 0.6) { // Lower threshold for linear = bot
-        botScore += 0.5;
-        reasons.push('Too linear mouse movement');
-      } else if (linearRatio > 0.4) { // Medium linear = suspicious
-        botScore += 0.2;
-        reasons.push('Somewhat linear mouse movement');
-      } else {
-        humanScore += 0.1;
-        reasons.push('Natural mouse curves');
+      // Check if movement is extremely linear
+      const dx1 = prev.x - prevPrev.x;
+      const dy1 = prev.y - prevPrev.y;
+      const dx2 = curr.x - prev.x;
+      const dy2 = curr.y - prev.y;
+      
+      if (Math.abs(dx1 - dx2) < 1 && Math.abs(dy1 - dy2) < 1) {
+        linearCount++;
       }
-    }  return {
+    }
+    
+    const linearRatio = linearCount / (mouseMovements.length - 2);
+    if (linearRatio > 0.8) { // Only flag very linear = bot
+      botScore += 0.3;
+      reasons.push('Too linear mouse movement');
+    } else {
+      humanScore += 0.1;
+      reasons.push('Natural mouse curves');
+    }
+  }
+
+  return {
     humanScore: Math.min(1, humanScore),
     botScore: Math.min(1, botScore),
     confidence: 0.8,
@@ -306,7 +302,7 @@ function analyzeKeystrokeBehaviorBalanced(keystrokes) {
 }
 
 function analyzeFormInteractionsBalanced(formInteractions) {
-  if (!formInteractions || !Array.isArray(formInteractions) || formInteractions.length === 0) {
+  if (!formInteractions || formInteractions.length === 0) {
     return {
       humanScore: 0.5, // Neutral for no form data
       botScore: 0.1,
@@ -400,12 +396,4 @@ function calculateVariance(numbers) {
   const mean = numbers.reduce((sum, num) => sum + num, 0) / numbers.length;
   const variance = numbers.reduce((sum, num) => sum + Math.pow(num - mean, 2), 0) / numbers.length;
   return variance;
-}
-
-// Keep the validation function for compatibility
-export function validateMetrics(behaviorData) {
-  return {
-    valid: true,
-    errors: []
-  };
 }

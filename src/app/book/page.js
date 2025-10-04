@@ -697,7 +697,6 @@ Detected Patterns: Linear movement, identical timing`);
             <PassengerDetails
               initialData={bookingData.passengers}
               onNext={handleNext}
-              onBack={handleBack}
             />
           )}
           {currentStep === 2 && (
@@ -726,7 +725,6 @@ Detected Patterns: Linear movement, identical timing`);
             <>
               <Checkout
                 bookingData={bookingData}
-                train={train}
                 onComplete={handleComplete}
                 onBack={handleBack}
                 isSubmitting={isSubmitting}
@@ -739,7 +737,7 @@ Detected Patterns: Linear movement, identical timing`);
                 currentTrustScore={behaviorTracking.currentTrustScore}
                 trustLevel={behaviorTracking.trustLevel}
               />
-
+              
               {/* Tombol Test AI - Untuk Development */}
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <div className="bg-blue-50 p-4 rounded-lg">
@@ -758,7 +756,7 @@ Detected Patterns: Linear movement, identical timing`);
                         </svg>
                       )}
                     </button>
-
+                    
                     <button
                       onClick={handleTestSimulateBot}
                       disabled={isAnalyzing}
@@ -766,7 +764,7 @@ Detected Patterns: Linear movement, identical timing`);
                     >
                       🎭 Simulate Bot Behavior
                     </button>
-
+                    
                     <button
                       onClick={handleTestReset}
                       disabled={isAnalyzing}
@@ -775,7 +773,7 @@ Detected Patterns: Linear movement, identical timing`);
                       🔄 Reset
                     </button>
                   </div>
-
+                  
                   {/* Status Display */}
                   <div className="mt-3 text-xs text-blue-700">
                     <div className="flex items-center gap-4">
@@ -804,7 +802,7 @@ Detected Patterns: Linear movement, identical timing`);
       {/* Floating AI Test Panel - Development Only */}
       <div className="fixed bottom-4 right-4 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm">
         <h4 className="text-sm font-semibold mb-3 text-gray-800">🧪 AI Test Panel</h4>
-
+        
         {/* AI Method Indicator */}
         <div className="mb-3 p-2 bg-blue-50 rounded text-xs">
           <div className="flex justify-between">
@@ -814,7 +812,7 @@ Detected Patterns: Linear movement, identical timing`);
             </span>
           </div>
         </div>
-
+        
         {/* Trust Score Display */}
         <div className="mb-3 p-2 bg-gray-50 rounded text-xs">
           <div className="flex justify-between">
@@ -860,7 +858,7 @@ Detected Patterns: Linear movement, identical timing`);
           >
             🤖 Analyze My Behavior
           </button>
-
+          
           <button
             onClick={handleTestSimulateBot}
             disabled={isAnalyzing}
@@ -868,7 +866,7 @@ Detected Patterns: Linear movement, identical timing`);
           >
             🎭 Simulate Bot Behavior
           </button>
-
+          
           <button
             onClick={handleTestReset}
             className="w-full px-3 py-2 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 flex items-center justify-center gap-1"
@@ -894,6 +892,30 @@ Detected Patterns: Linear movement, identical timing`);
         onError={captchaManager.onCaptchaError}
         onClose={captchaManager.hideCaptcha}
       />
+
+      {/* Old Captcha Modal - Keep for reference but not used */}
+      {false && showCaptcha && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Human Verification</h3>
+            <p className="text-gray-600 mb-6">Complete verification to proceed.</p>
+            <ReCAPTCHA
+              ref={(ref) => setRecaptchaRef(ref)}
+              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+              onChange={handleRecaptchaVerify}
+            />
+            <button
+              onClick={() => {
+                setShowCaptcha(false);
+                if (recaptchaRef) recaptchaRef.reset();
+              }}
+              className="mt-4 text-gray-500 hover:text-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       </div>
     </ProtectedRoute>
   );
